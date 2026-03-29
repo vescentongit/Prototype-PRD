@@ -88,12 +88,13 @@ main.cpp
 
 ## Anggota
 
-|Nama                       |    NIM     |\
-|Muhammad Orkhan            |  18225091  |\
-|Agastya Tristan Dhaniswara |  18225093  |\
-|Tirta Wening Putri Harsono |  18225095  |\
-|Fayza Kamilia              |  18225097  |\
-|Lana Dzakira Cahyadi       |  18225099  |\
+| Nama                       | NIM      |
+|----------------------------|----------|
+| Muhammad Orkhan            | 18225091 |
+| Agastya Tristan Dhaniswara | 18225093 |
+| Tirta Wening Putri Harsono | 18225095 |
+| Fayza Kamilia              | 18225097 |
+| Lana Dzakira Cahyadi       | 18225099 |
 
 ---
 
