@@ -5,9 +5,17 @@ using namespace std;
 int main(){
     Graph campus;
 
+    // ===== Input Cuaca =====
+    int cuacaInput;
+    cout << "Kondisi cuaca (1=Hujan, 0=Cerah): ";
+    cin >> cuacaInput;
+    bool isRaining = (cuacaInput == 1);
+    cout << "Mode aktif: " << (isRaining ? "Hujan — prioritas jalur beratap\n" : "Cerah — prioritas jarak & slope\n");
+    cin.ignore();
+
     // ===== Input Node (Lokasi) =====
     int jumlahNode;
-    cout << "Masukkan jumlah lokasi: ";
+    cout << "\nMasukkan jumlah lokasi: ";
     cin >> jumlahNode;
     cin.ignore();
 
@@ -19,10 +27,10 @@ int main(){
         double x, y, elev;
 
         cout << "Lokasi ke-" << i+1 << ":\n";
-        cout << "  Nama      : "; getline(cin, nama);
-        cout << "  X (Kanan/Kiri) (meter) : "; cin >> x;
-        cout << "  Y (Depan/Belakang) (meter) : "; cin >> y;
-        cout << "  Elevasi (mdpl)   : "; cin >> elev;
+        cout << "  Nama                        : "; getline(cin, nama);
+        cout << "  X (Kanan/Kiri)    (meter)   : "; cin >> x;
+        cout << "  Y (Depan/Belakang)(meter)   : "; cin >> y;
+        cout << "  Elevasi           (mdpl)    : "; cin >> elev;
         cin.ignore();
         cout << endl;
 
@@ -32,7 +40,7 @@ int main(){
     // ===== Input Edge (Jalan) =====
     int jumlahEdge;
     cout << "--- Daftar Lokasi ---\n";
-    for(int i = 0; i < campus.nodes.size(); i++){
+    for(int i = 0; i < (int)campus.nodes.size(); i++){
         cout << "  [" << i << "] " << campus.nodes[i].name << "\n";
     }
 
@@ -41,16 +49,19 @@ int main(){
 
     cout << "\n--- Input Jalan ---\n";
     for(int i = 0; i < jumlahEdge; i++){
-        int from, to;
+        int from, to, roofInput;
         cout << "Jalan ke-" << i+1 << ":\n";
-        cout << "  Dari index : "; cin >> from;
-        cout << "  Ke index   : "; cin >> to;
+        cout << "  Dari index               : "; cin >> from;
+        cout << "  Ke index                 : "; cin >> to;
+        cout << "  Ada atap? (1=Ya, 0=Tidak): "; cin >> roofInput;
+        bool hasRoof = (roofInput == 1);
 
-        campus.addEdge(from, to);
-        campus.addEdge(to, from);
+        campus.addEdge(from, to, hasRoof);
+        campus.addEdge(to, from, hasRoof);
 
-        cout << "  Jarak      : " << campus.hitungJarak(from, to) << " meter (otomatis)\n";
-        cout << "  Slope      : " << campus.hitungSlope(from, to) << "% (otomatis)\n\n";
+        cout << "  Jarak  : " << campus.hitungJarak(from, to) << " meter (otomatis)\n";
+        cout << "  Slope  : " << campus.hitungSlope(from, to) << "% (otomatis)\n";
+        cout << "  Atap   : " << (hasRoof ? "Ada" : "Tidak ada") << "\n\n";
     }
 
     // ===== Pencarian Route =====
@@ -72,24 +83,21 @@ int main(){
     cout << "Slope weight (0-10 | Kecuraman Tidak Penting-Pilih Jalur Paling Landai): ";
     cin >> slopeWeight;
 
-    vector<int> path = dijkstra(campus, start, goal, slopeWeight);
+    vector<int> path = dijkstra(campus, start, goal, slopeWeight, isRaining);
 
     cout << "\nRute terbaik dari " << startName << " ke " << goalName << ":\n";
     for(int node : path){
-        // cout << campus.nodes[node].name << " (x=" << campus.nodes[node].x << ", y=" << campus.nodes[node].y << ")\n";
-        if (node != path.back()){
-            cout << campus.nodes[node].name 
-            << " (x= " << campus.nodes[node].x 
-            << ", y=" << campus.nodes[node].y 
-            <<" --> ";
+        if(node != path.back()){
+            cout << campus.nodes[node].name
+                << " (x=" << campus.nodes[node].x
+                << ", y=" << campus.nodes[node].y
+                << ") --> ";
+        } else {
+            cout << campus.nodes[node].name
+                << " (x=" << campus.nodes[node].x
+                << ", y=" << campus.nodes[node].y
+                << ")" << endl;
         }
-        else{
-            cout << campus.nodes[node].name 
-            << " (x= " << campus.nodes[node].x 
-            << ", y=" << campus.nodes[node].y 
-            << endl;
-        }
-        
     }
 
     return 0;

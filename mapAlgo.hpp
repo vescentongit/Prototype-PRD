@@ -1,11 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-
 typedef struct Edge{
     int to;
     double distance;
     double slope;
+    bool hasRoof;   // apakah jalan ini ada atapnya?
 } Edge;
 
 typedef struct Node{
@@ -28,26 +28,25 @@ typedef struct Graph{
         nodes.push_back(n);
     }
 
-    // ngitung jarak otomatis dari koordinat X,Y
     double hitungJarak(int from, int to){
         double dx = nodes[to].x - nodes[from].x;
         double dy = nodes[to].y - nodes[from].y;
         return sqrt(dx*dx + dy*dy);
     }
 
-    // ngitung slope otomatis dari elevasi dan jarak
     double hitungSlope(int from, int to){
         double jarak = hitungJarak(from, to);
         if(jarak == 0) return 0;
         double dElev = abs(nodes[to].elevation - nodes[from].elevation);
-        return (dElev / jarak) * 100; // dalam persen
+        return (dElev / jarak) * 100;
     }
 
-    void addEdge(int from, int to){
+    void addEdge(int from, int to, bool hasRoof){
         Edge e;
-        e.to = to;
+        e.to       = to;
         e.distance = hitungJarak(from, to);
         e.slope    = hitungSlope(from, to);
+        e.hasRoof  = hasRoof;
         nodes[from].edges.push_back(e);
     }
 
@@ -70,7 +69,7 @@ typedef struct State{
 } State;
 
 
-vector<int> dijkstra(Graph& g, int start, int goal, double slopeWeight){
+vector<int> dijkstra(Graph& g, int start, int goal, double slopeWeight, bool isRaining){
     int n = g.nodes.size();
 
     vector<double> dist(n, numeric_limits<double>::max());
@@ -87,7 +86,8 @@ vector<int> dijkstra(Graph& g, int start, int goal, double slopeWeight){
         if(current.node == goal) break;
 
         for(auto &edge : g.nodes[current.node].edges){
-            double cost = edge.distance + slopeWeight * edge.slope;
+            double roofPenalty = (isRaining && !edge.hasRoof) ? 99999 : 0;
+            double cost = edge.distance + roofPenalty + slopeWeight * edge.slope;
             double newDist = dist[current.node] + cost;
 
             if(newDist < dist[edge.to]){

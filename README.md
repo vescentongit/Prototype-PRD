@@ -1,20 +1,23 @@
 # Campus Route Finder
 
-Intinya nyari jalan paling enak di kampus, bukan cuma yang paling pendek, tapi juga yang paling ga bikin ngos-ngosan.
+Intinya nyari jalan paling enak di kampus, bukan cuma yang paling pendek, tapi juga yang paling ga bikin ngos-ngosan, dan sekarang udah ditambahin fitur bisa ngindarin jalan yang ga ada atapnya kalau lagi hujan.
 
 ---
 
 ## Latar Belakang
 
-Pengalaman dari awal OSKM, kampus kita capek banget buat jalan. Jalan 200 meter tapi nanjak 30 derajat beda rasanya sama jalan 300 meter tapi datar. Program ini ngitung rute dengan mempertimbangkan dua hal sekaligus: _jarak_ dan _kemiringan/elevasi jalan_.
+Pengalaman dari awal OSKM, kampus kita capek banget buat jalan. Jalan 200 meter tapi nanjak 30 derajat beda rasanya sama jalan 300 meter tapi datar. Belum lagi kalau hujan, jalan yang ga ada atapnya jadi mimpi buruk.
+
+Program ini ngitung rute dengan mempertimbangkan tiga hal sekaligus: _jarak_, _kemiringan jalan_, dan _kondisi cuaca_.
 
 Algoritmanya Dijkstra, tapi weight functionnya dimodifikasi:
 
 ```
-biaya = jarak + (slopeWeight * kemiringan)
+biaya = jarak + roofPenalty + (slopeWeight * kemiringan) 
 ```
 
-`slopeWeight` ini yang nentuin seberapa _peka_ program ini sama tanjakan. Set ke 0 kalau mau jarak terpendek aja, naikin nilainya kalau mau rute yang lebih landai.
+- `slopeWeight` — seberapa peka program sama tanjakan. Set ke 0 kalau mau jarak terpendek aja, naikin nilainya kalau mau rute yang lebih landai.
+- `roofPenalty` — kalau hujan dan jalan tidak ada atapnya, dikasih penalty besar (99999) supaya Dijkstra otomatis menghindarinya.
 
 ---
 
@@ -23,24 +26,31 @@ biaya = jarak + (slopeWeight * kemiringan)
 ### Compile
 
 ```bash
-g++ main.cpp -o [masukin nama yang kamu mau] && ./[masukin nama yang kamu mau]
+g++ -std=c++17 main.cpp -o [nama] && ./[nama]
 ```
 
 ### Input yang dibutuhkan
 
-Program bakal nanya satu-satu:
+Program bakal nanya satu-satu, dimulai dari kondisi cuaca:
+
+```
+Kondisi cuaca (1=Hujan, 0=Cerah): 1
+Mode aktif: Hujan — prioritas jalur beratap
+```
+
+Lalu input lokasi seperti biasa:
 
 ```
 Masukkan jumlah lokasi: 4
 
-Lokasi ke-0:
-  Nama      : Gerbang
-  X (meter) : 0
-  Y (meter) : 0
-  Elevasi   : 800
+Lokasi ke-1:
+  Nama                        : Gerbang
+  X (Kanan/Kiri)    (meter)   : 0
+  Y (Depan/Belakang)(meter)   : 0
+  Elevasi           (mdpl)    : 800
 ```
 
-Koordinat pakai X, Y dalam **meter** dari titik referensi (0.0).
+Koordinat pakai X, Y dalam **meter** dari titik referensi (0, 0).
 
 ```
 Y
@@ -51,7 +61,19 @@ Y
 ----------------> X
 ```
 
-Jarak antar titik dan kemiringannya **dihitung otomatis** dari koordinat yang diinput.
+Waktu input jalan, sekarang ada pertanyaan tambahan soal atap:
+
+```
+Jalan ke-1:
+  Dari index               : 0
+  Ke index                 : 1
+  Ada atap? (1=Ya, 0=Tidak): 1
+  Jarak  : 120.0 meter (otomatis)
+  Slope  : 3.3% (otomatis)
+  Atap   : Ada
+```
+
+Jarak dan kemiringan **dihitung otomatis** dari koordinat yang diinput.
 
 ### Output
 
@@ -60,29 +82,34 @@ Rute terbaik dari Gerbang ke Gedung A:
   Gerbang (x=0, y=0) --> Persimpangan (x=100, y=50) --> Gedung A (x=200, y=150)
 ```
 
+Kalau hujan dan tidak ada rute beratap yang bisa dicapai, program tetap nampilin rute terpendek yang tersedia.
+
 ---
 
 ## Struktur Kode
 
 ```
-main.cpp
-├── struct Edge      — satu edge berisi: ke mana, berapa jauh, berapa curam
-├── struct Node      — satu node berisi: nama, koordinat, elevasi, daftar jalan keluar
-├── struct Graph     — keseluruhan peta + fungsi addNode/addEdge
-├── struct State     — buat priority queue
-└── dijkstra()       — fungsi utama pencarian rute
+├── main.cpp        — input/output + logika cuaca
+└── mapAlgo.hpp
+    ├── struct Edge     — ke mana, berapa jauh, berapa curam, ada atap atau tidak
+    ├── struct Node     — nama, koordinat, elevasi, daftar jalan keluar
+    ├── struct Graph    — keseluruhan peta + fungsi addNode/addEdge
+    ├── struct State    — tiket buat priority queue
+    └── dijkstra()      — fungsi utama pencarian rute
 ```
 
 ---
 
 ## Cara Kerja Singkat
 
-1. Semua jarak diinisialisasi `∞` dulu
-2. Mulai dari node awal, masukin ke priority queue
-3. Tiap iterasi, ambil node dengan weight terkecil
-4. Cek semua tetangganya (edges), kalau ketemu jalan yang lebih murah, update
-5. Ulang sampai nyampe tujuan
-6. Rekonstruksi rute dari belakang pakai array `prev[]`
+1. User input kondisi cuaca di awal
+2. Semua jarak diinisialisasi `∞` dulu
+3. Mulai dari node awal, masukin ke priority queue
+4. Tiap iterasi, ambil node dengan weight terkecil
+5. Cek semua tetangganya — kalau hujan dan jalan tidak ada atap, langsung dikasih penalty besar
+6. Kalau ketemu jalan yang lebih murah, update
+7. Ulang sampai nyampe tujuan
+8. Rekonstruksi rute dari belakang pakai array `prev[]`
 
 ---
 
